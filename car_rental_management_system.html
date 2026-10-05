@@ -1,0 +1,2029 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriveGo Pro - ระบบจัดการรถเช่า</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Prompt for modern Thai UI) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; color: black; }
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="h-full text-slate-800 antialiased overflow-hidden flex flex-col md:flex-row">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-full md:w-64 bg-slate-900 text-slate-300 flex-shrink-0 flex flex-col justify-between z-30 transition-all duration-300 ease-in-out md:static absolute inset-y-0 -translateX-full md:translate-x-0">
+        <div>
+            <!-- Sidebar Header -->
+            <div class="h-16 px-6 flex items-center justify-between border-b border-slate-800 bg-slate-950">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                        <i class="fa-solid fa-car-side text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg text-white tracking-wide">DriveGo <span class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 font-normal">PRO</span></h1>
+                        <p class="text-[10px] text-slate-400">ระบบจัดการรถเช่าสมบูรณ์แบบ</p>
+                    </div>
+                </div>
+                <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="p-4 space-y-1.5 font-medium text-sm">
+                <a href="#" onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-white bg-blue-600 shadow-md shadow-blue-600/20">
+                    <i class="fa-solid fa-chart-pie w-5 text-center text-base"></i>
+                    <span>สรุปภาพรวม</span>
+                </a>
+                <a href="#" onclick="switchTab('vehicles')" id="nav-vehicles" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-car w-5 text-center text-base"></i>
+                    <span>จัดการข้อมูลรถ</span>
+                    <span id="badge-total-cars" class="ml-auto bg-slate-800 text-slate-300 text-xs px-2 py-0.5 rounded-full border border-slate-700">0</span>
+                </a>
+                <a href="#" onclick="switchTab('customers')" id="nav-customers" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-users w-5 text-center text-base"></i>
+                    <span>จัดการข้อมูลลูกค้า</span>
+                </a>
+                <a href="#" onclick="switchTab('bookings')" id="nav-bookings" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-calendar-check w-5 text-center text-base"></i>
+                    <span>ระบบการจองรถ</span>
+                    <span id="badge-active-bookings" class="ml-auto bg-amber-500/20 text-amber-400 text-xs px-2 py-0.5 rounded-full border border-amber-500/30">0</span>
+                </a>
+                <a href="#" onclick="switchTab('returns')" id="nav-returns" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-key w-5 text-center text-base text-emerald-400"></i>
+                    <span class="text-emerald-400 font-semibold">รับ–คืนรถ & คิดค่าปรับ</span>
+                </a>
+                <a href="#" onclick="switchTab('reports')" id="nav-reports" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-file-invoice-dollar w-5 text-center text-base"></i>
+                    <span>รายงานการเงิน & ค่าปรับ</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Sidebar Footer Action -->
+        <div class="p-4 border-t border-slate-800">
+            <button onclick="openBookingModal()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-medium py-2.5 px-4 rounded-xl shadow-lg shadow-emerald-900/30 flex items-center justify-center space-x-2 transition-all">
+                <i class="fa-solid fa-plus-circle"></i>
+                <span>สร้างการจองใหม่</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+
+        <!-- Top Navigation Header -->
+        <header class="h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between flex-shrink-0 z-10 shadow-sm">
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <div>
+                    <h2 id="page-title" class="text-lg font-bold text-slate-900">สรุปภาพรวมระบบ (Dashboard)</h2>
+                    <p class="text-xs text-slate-500 hidden sm:block" id="current-datetime">วันจันทร์ที่ 5 ตุลาคม 2026</p>
+                </div>
+            </div>
+
+            <!-- Header Right Controls -->
+            <div class="flex items-center space-x-3 sm:space-x-4">
+                <!-- Search Box -->
+                <div class="relative hidden lg:block">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" oninput="globalQuickSearch(this.value)" placeholder="ค้นหาทะเบียน, ชื่อลูกค้า, เลขการจอง..." class="w-64 pl-9 pr-4 py-1.5 text-xs bg-slate-100 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all">
+                </div>
+
+                <!-- Notifications -->
+                <div class="relative">
+                    <button onclick="toggleNotifications()" class="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+                        <i class="fa-regular fa-bell text-lg"></i>
+                        <span id="notif-ping" class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white"></span>
+                    </button>
+                    <!-- Notification Dropdown -->
+                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
+                        <div class="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
+                            <span class="font-bold text-xs text-slate-800">การแจ้งเตือนสำคัญ</span>
+                            <span class="text-[10px] bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full font-semibold">2 รายการคืนวันนี้</span>
+                        </div>
+                        <div class="divide-y divide-slate-50 text-xs max-h-64 overflow-y-auto custom-scrollbar">
+                            <a href="#" onclick="switchTab('returns'); toggleNotifications();" class="p-3 block hover:bg-slate-50 transition-colors">
+                                <p class="font-semibold text-slate-800"><i class="fa-solid fa-clock text-amber-500 mr-1.5"></i> ครบกำหนดคืนรถวันนี้</p>
+                                <p class="text-slate-500 mt-1">Toyota Camry (กข 1234 กทม) - คุณสมชาย ใจดี</p>
+                                <span class="text-[10px] text-slate-400 mt-1 block">กำหนดคืน: 18:00 น.</span>
+                            </a>
+                            <a href="#" onclick="switchTab('vehicles'); toggleNotifications();" class="p-3 block hover:bg-slate-50 transition-colors">
+                                <p class="font-semibold text-slate-800"><i class="fa-solid fa-wrench text-rose-500 mr-1.5"></i> แจ้งเตือนเช็กระยะ</p>
+                                <p class="text-slate-500 mt-1">Mazda CX-5 (งน 4321 ชลบุรี) เข้าซ่อมบำรุงตามระยะ</p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Profile -->
+                <div class="flex items-center space-x-3 pl-3 border-l border-slate-200">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120" alt="Admin Avatar" class="w-9 h-9 rounded-full object-cover ring-2 ring-blue-500/30">
+                    <div class="hidden sm:block text-left">
+                        <p class="text-xs font-semibold text-slate-800 leading-tight">คุณวิภาส เจ้าหน้าที่</p>
+                        <p class="text-[10px] text-slate-500">ผู้ดูแลระบบ (Admin)</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Container -->
+        <main class="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar bg-slate-50/50" id="main-content">
+
+            <!-- ================= VIEW 1: DASHBOARD ================= -->
+            <section id="view-dashboard" class="space-y-6">
+                <!-- Metrics Summary Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                    <!-- Stat Card 1 -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">ยานพาหนะทั้งหมด</p>
+                                <h3 id="stat-total-cars" class="text-2xl md:text-3xl font-bold text-slate-900 mt-1">0</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold">
+                                <i class="fa-solid fa-car"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-center text-xs text-slate-500">
+                            <span class="text-emerald-600 font-semibold flex items-center mr-1">
+                                <i class="fa-solid fa-circle-check mr-1"></i>พร้อมใช้งาน
+                            </span>
+                            <span id="stat-available-cars">0</span> คัน
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 2 -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">กำลังถูกเช่าใช้งาน</p>
+                                <h3 id="stat-rented-cars" class="text-2xl md:text-3xl font-bold text-slate-900 mt-1">0</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl font-bold">
+                                <i class="fa-solid fa-key"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-center text-xs text-slate-500">
+                            <span class="text-indigo-600 font-semibold mr-1" id="stat-rent-rate">0%</span> อัตราการใช้งานกองรถ
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 3 -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">รับ - คืนรถวันนี้</p>
+                                <h3 id="stat-today-returns" class="text-2xl md:text-3xl font-bold text-slate-900 mt-1">0</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-center text-xs text-amber-600 font-medium">
+                            <i class="fa-solid fa-triangle-exclamation mr-1"></i> ต้องตรวจสอบสัญญาวันนี้
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 4 -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">รายได้รวมเดือนนี้</p>
+                                <h3 id="stat-monthly-revenue" class="text-2xl md:text-3xl font-bold text-slate-900 mt-1">฿0</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
+                                <i class="fa-solid fa-wallet"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-center text-xs text-slate-500">
+                            <span>รวมค่าเช่า + ค่าปรับสุทธิ</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Middle Section: Fleet Status Bar & Quick Action Urgent Return List -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Fleet Visual Overview -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                        <h3 class="font-bold text-slate-800 text-base flex items-center justify-between">
+                            <span>สถานะกองยานพาหนะ</span>
+                            <i class="fa-solid fa-chart-donut text-slate-400"></i>
+                        </h3>
+                        
+                        <!-- Dynamic Visual Progress Bars -->
+                        <div class="space-y-3 pt-2">
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-emerald-700"><i class="fa-solid fa-circle text-[8px] mr-1"></i>พร้อมใช้งาน</span>
+                                    <span id="label-count-ready">0 คัน</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                    <div id="bar-ready" class="bg-emerald-500 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-blue-700"><i class="fa-solid fa-circle text-[8px] mr-1"></i>อยู่ระหว่างเช่า</span>
+                                    <span id="label-count-rented">0 คัน</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                    <div id="bar-rented" class="bg-blue-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-amber-700"><i class="fa-solid fa-circle text-[8px] mr-1"></i>จองแล้ว</span>
+                                    <span id="label-count-booked">0 คัน</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                    <div id="bar-booked" class="bg-amber-400 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-rose-700"><i class="fa-solid fa-circle text-[8px] mr-1"></i>ซ่อมบำรุง</span>
+                                    <span id="label-count-maintenance">0 คัน</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                    <div id="bar-maintenance" class="bg-rose-500 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-600 space-y-1">
+                            <p class="font-semibold text-slate-800"><i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i>คำแนะนำจัดการ:</p>
+                            <p>รถกลุ่ม EV & Luxury มีอัตราการจองล่วงหน้าสูงสุด ควรเตรียมพร้อมทำความสะอาดล่วงหน้า</p>
+                        </div>
+                    </div>
+
+                    <!-- Urgent Returns / Pickups list -->
+                    <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-bold text-slate-800 text-base">รายการที่ต้องรับคืน / ติดตามวันนี้</h3>
+                                <button onclick="switchTab('returns')" class="text-xs font-medium text-blue-600 hover:text-blue-800">ดูทั้งหมด <i class="fa-solid fa-arrow-right ml-1"></i></button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead>
+                                        <tr class="text-slate-400 border-b border-slate-100 pb-2">
+                                            <th class="font-medium py-2">เลขการจอง / ทะเบียน</th>
+                                            <th class="font-medium py-2">ชื่อผู้เช่า</th>
+                                            <th class="font-medium py-2">กำหนดคืน</th>
+                                            <th class="font-medium py-2">สถานะ</th>
+                                            <th class="font-medium py-2 text-right">ดำเนินการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashboard-urgent-returns" class="divide-y divide-slate-100">
+                                        <!-- Dynamic render -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Bookings Table -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-800 text-base">การจองล่าสุด</h3>
+                        <button onclick="switchTab('bookings')" class="text-xs font-semibold text-blue-600 hover:underline">จัดการการจองทั้งหมด</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-500 rounded-lg">
+                                <tr>
+                                    <th class="p-3 font-semibold rounded-l-lg">รหัสการจอง</th>
+                                    <th class="p-3 font-semibold">ลูกค้า</th>
+                                    <th class="p-3 font-semibold">รถยนต์</th>
+                                    <th class="p-3 font-semibold">วันรับ - คืนรถ</th>
+                                    <th class="p-3 font-semibold">ค่าเช่ารวม</th>
+                                    <th class="p-3 font-semibold">สถานะ</th>
+                                    <th class="p-3 font-semibold text-right rounded-r-lg">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboard-recent-bookings" class="divide-y divide-slate-100">
+                                <!-- Dynamic Render -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 2: VEHICLE MANAGEMENT ================= -->
+            <section id="view-vehicles" class="space-y-6 hidden">
+                <!-- Vehicle Toolbar -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                    <!-- Filters -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="filterVehicles('all')" class="v-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 text-white transition-all">ทั้งหมด</button>
+                        <button onclick="filterVehicles('Sedan')" class="v-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">Sedan</button>
+                        <button onclick="filterVehicles('SUV')" class="v-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">SUV</button>
+                        <button onclick="filterVehicles('Pickup')" class="v-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">Pickup</button>
+                        <button onclick="filterVehicles('EV')" class="v-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">EV (ไฟฟ้า)</button>
+                        <button onclick="filterVehicles('Luxury')" class="v-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">Luxury</button>
+                    </div>
+
+                    <!-- Search & Add Vehicle Button -->
+                    <div class="flex items-center space-x-3">
+                        <div class="relative flex-1 md:w-60">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input type="text" id="search-vehicle-input" oninput="renderVehicles()" placeholder="ค้นหารุ่น หรือ ทะเบียน..." class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <button onclick="openVehicleModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2 rounded-lg shadow-sm flex items-center space-x-1.5 whitespace-nowrap">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>เพิ่มรถใหม่</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Vehicle Cards Grid -->
+                <div id="vehicle-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Dynamic rendering vehicle cards -->
+                </div>
+            </section>
+
+            <!-- ================= VIEW 3: CUSTOMER MANAGEMENT ================= -->
+            <section id="view-customers" class="space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                    <div class="relative w-full sm:w-72">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="search-customer-input" oninput="renderCustomers()" placeholder="ค้นหาชื่อ, เบอร์โทร, เลขใบขับขี่..." class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button onclick="openCustomerModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2 rounded-lg shadow-sm flex items-center justify-center space-x-1.5">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>ลงทะเบียนลูกค้าใหม่</span>
+                    </button>
+                </div>
+
+                <!-- Customer Table -->
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-[11px] font-semibold">
+                                <tr>
+                                    <th class="p-4">รหัสลูกค้า / ชื่อ - สกุล</th>
+                                    <th class="p-4">เลขประจำตัวประชาชน</th>
+                                    <th class="p-4">เลขที่ใบขับขี่</th>
+                                    <th class="p-4">เบอร์โทรศัพท์ / อีเมล</th>
+                                    <th class="p-4">ประวัติการเช่า</th>
+                                    <th class="p-4">ระดับสมาชิก</th>
+                                    <th class="p-4 text-right">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customer-table-body" class="divide-y divide-slate-100">
+                                <!-- Dynamic Customers -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 4: BOOKING MANAGEMENT ================= -->
+            <section id="view-bookings" class="space-y-6 hidden">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                    <!-- Status Filter Tabs -->
+                    <div class="flex flex-wrap items-center gap-1">
+                        <button onclick="filterBookings('all')" class="b-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 text-white">ทั้งหมด</button>
+                        <button onclick="filterBookings('อยู่ระหว่างเช่า')" class="b-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">อยู่ระหว่างเช่า</button>
+                        <button onclick="filterBookings('จองแล้ว')" class="b-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">จองแล้ว</button>
+                        <button onclick="filterBookings('คืนรถแล้ว')" class="b-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">คืนรถแล้ว</button>
+                        <button onclick="filterBookings('ยกเลิก')" class="b-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">ยกเลิก</button>
+                    </div>
+
+                    <button onclick="openBookingModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium px-4 py-2 rounded-lg shadow-sm flex items-center space-x-1.5">
+                        <i class="fa-solid fa-calendar-plus"></i>
+                        <span>สร้างรายการจองใหม่</span>
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+                                <tr>
+                                    <th class="p-4">รหัสจอง</th>
+                                    <th class="p-4">ผู้เช่า</th>
+                                    <th class="p-4">รถยนต์ / ทะเบียน</th>
+                                    <th class="p-4">ช่วงเวลาเช่า</th>
+                                    <th class="p-4">จำนวนวัน</th>
+                                    <th class="p-4">ค่าเช่ารวม</th>
+                                    <th class="p-4">เงินประกัน</th>
+                                    <th class="p-4">สถานะ</th>
+                                    <th class="p-4 text-right">ดำเนินการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="booking-table-body" class="divide-y divide-slate-100">
+                                <!-- Dynamic Render -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 5: VEHICLE RETURN & FINES CALCULATION ================= -->
+            <section id="view-returns" class="space-y-6 hidden">
+                <div class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-6 rounded-2xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <h3 class="text-xl font-bold flex items-center">
+                            <i class="fa-solid fa-key text-emerald-400 mr-2"></i> ศูนย์รับคืนรถยนต์ & คำนวณค่าปรับ
+                        </h3>
+                        <p class="text-slate-300 text-xs">เลือกรถที่กำลังถูกเช่าเพื่อทำการตรวจรับ คืนเงินประกัน และสรุปค่าปรับอัตโนมัติ</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left: Select Active Rental -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                        <h4 class="font-bold text-slate-800 text-sm border-b pb-2">1. เลือกรถที่นำมาคืน</h4>
+                        <div id="returns-active-list" class="space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
+                            <!-- Dynamic list of rented cars -->
+                        </div>
+                    </div>
+
+                    <!-- Right: Return Calculation Tool -->
+                    <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-6">
+                        <div class="flex items-center justify-between border-b pb-3">
+                            <h4 class="font-bold text-slate-800 text-sm">2. ตรวจสอบสภาพรถ & คำนวณค่าปรับ</h4>
+                            <span id="selected-booking-badge" class="text-xs px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg font-mono">ยังไม่ได้เลือกรถ</span>
+                        </div>
+
+                        <form id="return-calc-form" onsubmit="event.preventDefault(); processFinalReturn();" class="space-y-5">
+                            <input type="hidden" id="return-booking-id">
+
+                            <!-- Contract Summary Info Banner -->
+                            <div id="return-contract-banner" class="hidden p-4 rounded-xl bg-blue-50 border border-blue-100 text-xs text-blue-900 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div>
+                                    <span class="text-blue-500 block">ผู้เช่า:</span>
+                                    <span id="rc-cust-name" class="font-bold"></span>
+                                </div>
+                                <div>
+                                    <span class="text-blue-500 block">รถยนต์:</span>
+                                    <span id="rc-car-name" class="font-bold"></span>
+                                </div>
+                                <div>
+                                    <span class="text-blue-500 block">กำหนดคืนเดิม:</span>
+                                    <span id="rc-plan-return" class="font-bold"></span>
+                                </div>
+                                <div>
+                                    <span class="text-blue-500 block">เงินประกันที่วางไว้:</span>
+                                    <span id="rc-deposit" class="font-bold text-emerald-600"></span>
+                                </div>
+                            </div>
+
+                            <!-- Input Grid -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                                <!-- Actual Return Datetime -->
+                                <div>
+                                    <label class="block font-medium text-slate-700 mb-1">วัน-เวลา คืนรถจริง</label>
+                                    <input type="datetime-local" id="rc-actual-datetime" onchange="calculateFineSummary()" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                </div>
+
+                                <!-- Overtime Fine Rate Info -->
+                                <div>
+                                    <label class="block font-medium text-slate-700 mb-1">ค่าปรับคืนช้า (200 บาท/ชม.)</label>
+                                    <input type="text" id="rc-late-fine-display" readonly value="0 บาท" class="w-full p-2.5 bg-slate-100 font-bold text-rose-600 border border-slate-200 rounded-lg">
+                                </div>
+
+                                <!-- Fuel Status -->
+                                <div>
+                                    <label class="block font-medium text-slate-700 mb-1">ระดับน้ำมัน/แบตเตอรี่ ขณะคืน</label>
+                                    <select id="rc-fuel-level" onchange="calculateFineSummary()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                        <option value="100">เต็มถัง / 100% (ไม่มีค่าปรับ)</option>
+                                        <option value="75">3/4 ถัง / 75% (ปรับ 300 บาท)</option>
+                                        <option value="50">1/2 ถัง / 50% (ปรับ 600 บาท)</option>
+                                        <option value="25">1/4 ถัง / 25% (ปรับ 900 บาท)</option>
+                                        <option value="0">ถังว่างเปล่า / 0% (ปรับ 1,200 บาท)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Damage / Cleaning Fine -->
+                                <div>
+                                    <label class="block font-medium text-slate-700 mb-1">ค่าปรับทำความสะอาด / ความเสียหาย (บาท)</label>
+                                    <input type="number" id="rc-damage-fine" oninput="calculateFineSummary()" value="0" min="0" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block font-medium text-slate-700 mb-1 text-xs">หมายเหตุความเสียหาย / สภาพรถ</label>
+                                <textarea id="rc-notes" rows="2" placeholder="เช่น มีรอยขีดข่วนบางๆ ที่สเกิร์ตหน้า, คราบสกปรกเบาะหลัง..." class="w-full p-2.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                            </div>
+
+                            <!-- Financial Calculation Summary Box -->
+                            <div class="bg-slate-900 text-white p-5 rounded-2xl space-y-3">
+                                <h5 class="text-xs uppercase tracking-wider text-slate-400 font-bold">สรุปยอดเงินสุทธิ</h5>
+                                <div class="space-y-1.5 text-xs border-b border-slate-800 pb-3">
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-400">ค่าเช่าตามสัญญา:</span>
+                                        <span id="sum-base-rent">0 บาท</span>
+                                    </div>
+                                    <div class="flex justify-between text-amber-400">
+                                        <span>ค่าปรับคืนช้า:</span>
+                                        <span id="sum-late-fine">+0 บาท</span>
+                                    </div>
+                                    <div class="flex justify-between text-amber-400">
+                                        <span>ค่าปรับน้ำมันขาด:</span>
+                                        <span id="sum-fuel-fine">+0 บาท</span>
+                                    </div>
+                                    <div class="flex justify-between text-rose-400">
+                                        <span>ค่าเสียหาย/ทำความสะอาด:</span>
+                                        <span id="sum-damage-fine">+0 บาท</span>
+                                    </div>
+                                    <div class="flex justify-between text-emerald-400 pt-1 font-semibold">
+                                        <span>หัก เงินประกันที่ได้รับแล้ว:</span>
+                                        <span id="sum-deposit-deduct">-0 บาท</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between pt-1">
+                                    <div>
+                                        <p class="text-[11px] text-slate-400">ยอดชำระสุทธิ (หักประกันแล้ว):</p>
+                                        <p id="sum-net-total" class="text-2xl font-bold text-emerald-400">0 บาท</p>
+                                    </div>
+                                    <button type="submit" id="btn-submit-return" disabled class="bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:hover:bg-emerald-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-emerald-900/40 text-xs flex items-center space-x-2 transition-all">
+                                        <i class="fa-solid fa-check-circle text-base"></i>
+                                        <span>ยืนยันรับคืนรถ & ออกใบเสร็จ</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 6: FINANCIAL & FINE REPORTS ================= -->
+            <section id="view-reports" class="space-y-6 hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-500">รายได้ค่าเช่ารวม</p>
+                            <h3 id="report-rental-income" class="text-2xl font-bold text-slate-900 mt-1">฿0</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-car"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-500">ค่าปรับรวมที่จัดเก็บได้</p>
+                            <h3 id="report-fine-income" class="text-2xl font-bold text-amber-600 mt-1">฿0</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-gavel"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-500">รวมรับสุทธิทั้งหมด</p>
+                            <h3 id="report-grand-total" class="text-2xl font-bold text-emerald-600 mt-1">฿0</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-sack-dollar"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial History Table -->
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
+                    <h3 class="font-bold text-slate-800 text-base">ประวัติการชำระเงินและออกใบชำระ</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+                                <tr>
+                                    <th class="p-3">รหัสการจอง</th>
+                                    <th class="p-3">ลูกค้า</th>
+                                    <th class="p-3">ค่าเช่า</th>
+                                    <th class="p-3">ค่าปรับคืนช้า</th>
+                                    <th class="p-3">ค่าปรับน้ำมัน</th>
+                                    <th class="p-3">ค่าความเสียหาย</th>
+                                    <th class="p-3">ยอดรวมสุทธิ</th>
+                                    <th class="p-3 text-right">ใบเสร็จ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="financial-history-table" class="divide-y divide-slate-100">
+                                <!-- Dynamic Render -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+
+    <!-- ================= MODAL: ADD / EDIT VEHICLE ================= -->
+    <div id="modal-vehicle" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden transition-all transform scale-100">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <h3 id="modal-vehicle-title" class="font-bold text-base"><i class="fa-solid fa-car mr-2 text-blue-400"></i>เพิ่มข้อมูลรถยนต์</h3>
+                <button onclick="closeModal('modal-vehicle')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="vehicle-form" onsubmit="event.preventDefault(); saveVehicle();" class="p-6 space-y-4 text-xs">
+                <input type="hidden" id="v-id">
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">ยี่ห้อ & รุ่นรถยนต์</label>
+                    <input type="text" id="v-model" placeholder="เช่น Toyota Camry 2.5 HEV" required class="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">ประเภทรถ</label>
+                        <select id="v-category" required class="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="Sedan">Sedan</option>
+                            <option value="SUV">SUV</option>
+                            <option value="Pickup">Pickup</option>
+                            <option value="EV">EV (ไฟฟ้า)</option>
+                            <option value="Luxury">Luxury</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">เลขทะเบียนรถ</label>
+                        <input type="text" id="v-plate" placeholder="เช่น กข 1234 กทม" required class="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">ค่าเช่าวันละ (บาท)</label>
+                        <input type="number" id="v-rate" min="1" placeholder="1800" required class="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">สถานะรถ</label>
+                        <select id="v-status" class="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="พร้อมใช้งาน">พร้อมใช้งาน</option>
+                            <option value="อยู่ระหว่างเช่า">อยู่ระหว่างเช่า</option>
+                            <option value="จองแล้ว">จองแล้ว</option>
+                            <option value="ซ่อมบำรุง">ซ่อมบำรุง</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">ลิงก์ รูปภาพรถ (URL)</label>
+                    <input type="url" id="v-image" placeholder="https://..." class="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="pt-2 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('modal-vehicle')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">ยกเลิก</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold">บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: ADD CUSTOMER ================= -->
+    <div id="modal-customer" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <h3 class="font-bold text-base"><i class="fa-solid fa-user-plus mr-2 text-emerald-400"></i>ลงทะเบียนลูกค้าใหม่</h3>
+                <button onclick="closeModal('modal-customer')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="customer-form" onsubmit="event.preventDefault(); saveCustomer();" class="p-6 space-y-4 text-xs">
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">ชื่อ - นามสกุล</label>
+                    <input type="text" id="c-name" placeholder="คุณสมชาย ใจดี" required class="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">เลขบัตรประชาชน</label>
+                        <input type="text" id="c-idcard" placeholder="1-1002-XXXXX-XX-X" required class="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">เลขที่ใบขับขี่</label>
+                        <input type="text" id="c-license" placeholder="DL-XXXXXX" required class="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">เบอร์โทรศัพท์</label>
+                        <input type="tel" id="c-phone" placeholder="081-XXX-XXXX" required class="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">ระดับลูกค้า</label>
+                        <select id="c-tier" class="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="ทั่วไป">ทั่วไป (Standard)</option>
+                            <option value="VIP">VIP Customer</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">อีเมล</label>
+                    <input type="email" id="c-email" placeholder="customer@email.com" class="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="pt-2 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('modal-customer')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">ยกเลิก</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold">บันทึกข้อมูลลูกค้า</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: NEW BOOKING ================= -->
+    <div id="modal-booking" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <h3 class="font-bold text-base"><i class="fa-solid fa-calendar-plus mr-2 text-blue-400"></i>สร้างการจองรถยนต์ใหม่</h3>
+                <button onclick="closeModal('modal-booking')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="booking-form" onsubmit="event.preventDefault(); saveBooking();" class="p-6 space-y-4 text-xs">
+                <!-- Select Customer -->
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">เลือกลูกค้าผู้เช่า</label>
+                    <select id="bk-customer" required class="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <!-- Dynamic customers options -->
+                    </select>
+                </div>
+
+                <!-- Select Available Vehicle -->
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">เลือกรถยนต์ (เฉพาะรถที่พร้อมใช้งาน)</label>
+                    <select id="bk-vehicle" onchange="calculateBookingCost()" required class="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <!-- Dynamic available cars options -->
+                    </select>
+                </div>
+
+                <!-- Dates -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">วัน-เวลารับรถ</label>
+                        <input type="datetime-local" id="bk-pickup" onchange="calculateBookingCost()" required class="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">วัน-เวลาคืนรถ</label>
+                        <input type="datetime-local" id="bk-return" onchange="calculateBookingCost()" required class="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <!-- Auto Price Summary Banner -->
+                <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-1 font-mono text-slate-700">
+                    <div class="flex justify-between">
+                        <span>จำนวนวันเช่า:</span>
+                        <span id="bk-calc-days" class="font-bold text-slate-900">0 วัน</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>ค่าเช่าต่อวัน:</span>
+                        <span id="bk-calc-daily-rate" class="font-bold text-slate-900">0 บาท</span>
+                    </div>
+                    <div class="flex justify-between text-blue-600 font-bold border-t pt-1">
+                        <span>ค่าเช่ารวมประเมิน:</span>
+                        <span id="bk-calc-total-rate">0 บาท</span>
+                    </div>
+                    <div class="flex justify-between text-amber-600">
+                        <span>เงินประกันความเสียหาย:</span>
+                        <span id="bk-calc-deposit">3,000 บาท</span>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('modal-booking')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">ยกเลิก</button>
+                    <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-md">ยืนยันการจอง</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: RECEIPT / INVOICE PREVIEW ================= -->
+    <div id="modal-receipt" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full my-8 overflow-hidden text-slate-800">
+            <!-- Header bar for screen view -->
+            <div class="no-print bg-slate-900 text-white px-6 py-3 flex items-center justify-between">
+                <span class="font-bold text-xs"><i class="fa-solid fa-file-invoice mr-2"></i>ตัวอย่างใบเสร็จรับเงิน / ใบสรุปการเช่า</span>
+                <div class="flex items-center space-x-2">
+                    <button onclick="window.print()" class="px-3 py-1 bg-blue-600 hover:bg-blue-500 rounded text-xs font-medium"><i class="fa-solid fa-print mr-1"></i>พิมพ์ใบเสร็จ</button>
+                    <button onclick="closeModal('modal-receipt')" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+
+            <!-- Printable Receipt Paper Box -->
+            <div id="receipt-paper" class="p-8 space-y-6 text-xs bg-white">
+                <!-- Header -->
+                <div class="flex justify-between items-start border-b pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 tracking-tight">DriveGo Car Rental Services</h2>
+                        <p class="text-slate-500 text-[10px]">123 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110</p>
+                        <p class="text-slate-500 text-[10px]">เลขประจำตัวผู้เสียภาษี: 0105562001234 | โทร: 02-123-4567</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-md uppercase">ใบเสร็จรับเงิน / RECEIPT</span>
+                        <p class="mt-2 text-slate-600 font-mono font-bold" id="rcpt-no">INV-2026-0001</p>
+                        <p class="text-slate-400 text-[10px]" id="rcpt-date">วันที่: 05/10/2026</p>
+                    </div>
+                </div>
+
+                <!-- Customer & Rental Details -->
+                <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl text-slate-700 border border-slate-100">
+                    <div>
+                        <p class="text-[10px] uppercase font-bold text-slate-400">ข้อมูลลูกค้า</p>
+                        <p class="font-bold text-slate-900 mt-1" id="rcpt-cust-name">-</p>
+                        <p id="rcpt-cust-phone" class="text-slate-500">-</p>
+                        <p id="rcpt-cust-license" class="text-slate-500 text-[10px]">-</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] uppercase font-bold text-slate-400">ข้อมูลรถยนต์ & สัญญา</p>
+                        <p class="font-bold text-slate-900 mt-1" id="rcpt-car-name">-</p>
+                        <p id="rcpt-car-plate" class="text-slate-500 font-mono">-</p>
+                        <p id="rcpt-rental-dates" class="text-slate-500 text-[10px]">-</p>
+                    </div>
+                </div>
+
+                <!-- Itemized Cost Table -->
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 text-slate-500 uppercase text-[10px] font-bold">
+                            <th class="py-2">รายการ</th>
+                            <th class="py-2 text-center">จำนวน</th>
+                            <th class="py-2 text-right">จำนวนเงิน (บาท)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <tr>
+                            <td class="py-2.5">
+                                <p class="font-semibold text-slate-800">ค่าเช่ารถยนต์ตามสัญญา</p>
+                                <p class="text-[10px] text-slate-400" id="rcpt-item-rent-desc">อัตราปกติ</p>
+                            </td>
+                            <td class="py-2.5 text-center font-mono" id="rcpt-item-days">1</td>
+                            <td class="py-2.5 text-right font-mono font-semibold" id="rcpt-item-rent-fee">0.00</td>
+                        </tr>
+                        <tr id="rcpt-row-late">
+                            <td class="py-2.5">
+                                <p class="font-semibold text-amber-700">ค่าปรับ คืนรถเกินเวลา</p>
+                            </td>
+                            <td class="py-2.5 text-center font-mono">-</td>
+                            <td class="py-2.5 text-right font-mono font-semibold text-amber-700" id="rcpt-item-late-fine">0.00</td>
+                        </tr>
+                        <tr id="rcpt-row-fuel">
+                            <td class="py-2.5">
+                                <p class="font-semibold text-amber-700">ค่าปรับ เติมน้ำมัน/พลังงานไม่ครบ</p>
+                            </td>
+                            <td class="py-2.5 text-center font-mono">-</td>
+                            <td class="py-2.5 text-right font-mono font-semibold text-amber-700" id="rcpt-item-fuel-fine">0.00</td>
+                        </tr>
+                        <tr id="rcpt-row-damage">
+                            <td class="py-2.5">
+                                <p class="font-semibold text-rose-700">ค่าความเสียหาย / ทำความสะอาด</p>
+                            </td>
+                            <td class="py-2.5 text-center font-mono">-</td>
+                            <td class="py-2.5 text-right font-mono font-semibold text-rose-700" id="rcpt-item-damage-fine">0.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Summary Totals -->
+                <div class="border-t border-slate-200 pt-4 space-y-1.5 text-right font-mono">
+                    <div class="flex justify-between text-slate-600">
+                        <span>ยอดรวมก่อนหักประกัน:</span>
+                        <span id="rcpt-subtotal" class="font-bold">0.00</span>
+                    </div>
+                    <div class="flex justify-between text-emerald-600">
+                        <span>หัก เงินมัดจำประกันความเสียหายที่ชำระไว้:</span>
+                        <span id="rcpt-deposit-deduct">-0.00</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold text-slate-900 border-t border-slate-900 pt-2">
+                        <span>ยอดชำระสุทธิ (Net Total):</span>
+                        <span id="rcpt-grand-total" class="text-blue-600">0.00 บาท</span>
+                    </div>
+                </div>
+
+                <!-- Signatures -->
+                <div class="pt-8 grid grid-cols-2 gap-8 text-center text-[10px] text-slate-500">
+                    <div>
+                        <div class="border-b border-slate-300 h-10 mb-2"></div>
+                        <p>ลงชื่อ..................................................</p>
+                        <p class="font-bold text-slate-700 mt-1">ผู้รับบริการ / ผู้เช่า</p>
+                    </div>
+                    <div>
+                        <div class="border-b border-slate-300 h-10 mb-2"></div>
+                        <p>ลงชื่อ..................................................</p>
+                        <p class="font-bold text-slate-700 mt-1">ผู้รับชำระ / เจ้าหน้าที่ DriveGo</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+    <script>
+        /* ==========================================================================
+           MOCKUP INITIAL DATASET
+           ========================================================================== */
+        const initialVehicles = [
+            { id: 'CAR-001', model: 'Toyota Camry 2.5 HEV', category: 'Sedan', plate: 'กข 1234 กรุงเทพมหานคร', rate: 1800, status: 'อยู่ระหว่างเช่า', image: 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&q=80&w=600' },
+            { id: 'CAR-002', model: 'Honda CR-V e:HEV RS', category: 'SUV', plate: 'ขก 5678 เชียงใหม่', rate: 2200, status: 'พร้อมใช้งาน', image: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&q=80&w=600' },
+            { id: 'CAR-003', model: 'Isuzu D-Max V-Cross 4x4', category: 'Pickup', plate: 'ผก 9988 ภูเก็ต', rate: 1600, status: 'พร้อมใช้งาน', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=600' },
+            { id: 'CAR-004', model: 'Tesla Model 3 Long Range', category: 'EV', plate: 'ฮฮ 8888 กรุงเทพมหานคร', rate: 3500, status: 'อยู่ระหว่างเช่า', image: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&q=80&w=600' },
+            { id: 'CAR-005', model: 'BMW 330e M Sport', category: 'Luxury', plate: 'ฎฎ 1111 กรุงเทพมหานคร', rate: 4500, status: 'จองแล้ว', image: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&q=80&w=600' },
+            { id: 'CAR-006', model: 'Mazda CX-5 2.0 S', category: 'SUV', plate: 'งน 4321 ชลบุรี', rate: 1900, status: 'ซ่อมบำรุง', image: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&q=80&w=600' },
+            { id: 'CAR-007', model: 'Ford Ranger Raptor', category: 'Pickup', plate: 'บข 7766 ขอนแก่น', rate: 2800, status: 'พร้อมใช้งาน', image: 'https://images.unsplash.com/photo-1559416523-140ddc3d238c?auto=format&fit=crop&q=80&w=600' },
+            { id: 'CAR-008', model: 'Hyundai Staria VIP', category: 'Luxury', plate: 'นข 5544 กรุงเทพมหานคร', rate: 3800, status: 'พร้อมใช้งาน', image: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&q=80&w=600' }
+        ];
+
+        const initialCustomers = [
+            { id: 'CUST-001', name: 'คุณสมชาย ใจดี', idCard: '1-1002-00345-67-8', license: 'DL-883921', phone: '081-234-5678', email: 'somchai.j@gmail.com', tier: 'VIP', rentalsCount: 8 },
+            { id: 'CUST-002', name: 'คุณสมศรี รักชาติ', idCard: '3-5099-00123-45-1', license: 'DL-445109', phone: '089-876-5432', email: 'somsri.r@hotmail.com', tier: 'ทั่วไป', rentalsCount: 3 },
+            { id: 'CUST-003', name: 'คุณอนันต์ สุขใจ', idCard: '1-7004-00882-11-9', license: 'DL-992018', phone: '086-555-4321', email: 'anan.s@company.co.th', tier: 'VIP', rentalsCount: 12 },
+            { id: 'CUST-004', name: 'คุณวิภาดา วงศ์สวัสดิ์', idCard: '2-1008-00552-33-4', license: 'DL-110293', phone: '092-333-8877', email: 'wipada.w@outlook.com', tier: 'ทั่วไป', rentalsCount: 2 },
+            { id: 'CUST-005', name: 'คุณธนากร สุวรรณ', idCard: '1-1011-00223-99-0', license: 'DL-772910', phone: '084-111-9900', email: 'thanakorn.s@gmail.com', tier: 'ทั่วไป', rentalsCount: 5 }
+        ];
+
+        const initialBookings = [
+            {
+                id: 'BK-2026-001',
+                customerId: 'CUST-001',
+                customerName: 'คุณสมชาย ใจดี',
+                vehicleId: 'CAR-001',
+                carModel: 'Toyota Camry 2.5 HEV',
+                plate: 'กข 1234 กรุงเทพมหานคร',
+                pickupDate: '2026-10-03T09:00',
+                returnDate: '2026-10-05T18:00',
+                days: 3,
+                dailyRate: 1800,
+                totalRentalFee: 5400,
+                deposit: 3000,
+                status: 'อยู่ระหว่างเช่า',
+                actualReturnDate: null,
+                lateFine: 0,
+                fuelFine: 0,
+                damageFine: 0,
+                netTotal: 5400
+            },
+            {
+                id: 'BK-2026-002',
+                customerId: 'CUST-003',
+                customerName: 'คุณอนันต์ สุขใจ',
+                vehicleId: 'CAR-004',
+                carModel: 'Tesla Model 3 Long Range',
+                plate: 'ฮฮ 8888 กรุงเทพมหานคร',
+                pickupDate: '2026-10-04T10:00',
+                returnDate: '2026-10-07T10:00',
+                days: 3,
+                dailyRate: 3500,
+                totalRentalFee: 10500,
+                deposit: 5000,
+                status: 'อยู่ระหว่างเช่า',
+                actualReturnDate: null,
+                lateFine: 0,
+                fuelFine: 0,
+                damageFine: 0,
+                netTotal: 10500
+            },
+            {
+                id: 'BK-2026-003',
+                customerId: 'CUST-002',
+                customerName: 'คุณสมศรี รักชาติ',
+                vehicleId: 'CAR-005',
+                carModel: 'BMW 330e M Sport',
+                plate: 'ฎฎ 1111 กรุงเทพมหานคร',
+                pickupDate: '2026-10-08T09:00',
+                returnDate: '2026-10-10T18:00',
+                days: 2,
+                dailyRate: 4500,
+                totalRentalFee: 9000,
+                deposit: 5000,
+                status: 'จองแล้ว',
+                actualReturnDate: null,
+                lateFine: 0,
+                fuelFine: 0,
+                damageFine: 0,
+                netTotal: 9000
+            },
+            {
+                id: 'BK-2026-004',
+                customerId: 'CUST-004',
+                customerName: 'คุณวิภาดา วงศ์สวัสดิ์',
+                vehicleId: 'CAR-002',
+                carModel: 'Honda CR-V e:HEV RS',
+                plate: 'ขก 5678 เชียงใหม่',
+                pickupDate: '2026-09-28T09:00',
+                returnDate: '2026-10-01T09:00',
+                days: 3,
+                dailyRate: 2200,
+                totalRentalFee: 6600,
+                deposit: 3000,
+                status: 'คืนรถแล้ว',
+                actualReturnDate: '2026-10-01T11:00',
+                lateFine: 400,
+                fuelFine: 0,
+                damageFine: 0,
+                netTotal: 7000
+            },
+            {
+                id: 'BK-2026-005',
+                customerId: 'CUST-005',
+                customerName: 'คุณธนากร สุวรรณ',
+                vehicleId: 'CAR-003',
+                carModel: 'Isuzu D-Max V-Cross 4x4',
+                plate: 'ผก 9988 ภูเก็ต',
+                pickupDate: '2026-09-25T08:00',
+                returnDate: '2026-09-27T18:00',
+                days: 2,
+                dailyRate: 1600,
+                totalRentalFee: 3200,
+                deposit: 2000,
+                status: 'คืนรถแล้ว',
+                actualReturnDate: '2026-09-27T18:00',
+                lateFine: 0,
+                fuelFine: 300,
+                damageFine: 1200,
+                netTotal: 4700
+            }
+        ];
+
+        /* Application Global State */
+        let vehicles = [...initialVehicles];
+        let customers = [...initialCustomers];
+        let bookings = [...initialBookings];
+        let currentVehicleFilter = 'all';
+        let currentBookingFilter = 'all';
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            updateDashboardStats();
+            renderDashboard();
+            renderVehicles();
+            renderCustomers();
+            renderBookings();
+            renderActiveReturnsList();
+            renderReports();
+            populateBookingFormOptions();
+        });
+
+        // Tab Switching Function
+        function switchTab(tabId) {
+            const tabs = ['dashboard', 'vehicles', 'customers', 'bookings', 'returns', 'reports'];
+            const titles = {
+                'dashboard': 'สรุปภาพรวมระบบ (Dashboard)',
+                'vehicles': 'จัดการข้อมูลยานพาหนะ (Vehicle Fleet)',
+                'customers': 'จัดการข้อมูลลูกค้า (Customer Management)',
+                'bookings': 'ระบบการจองรถยนต์ (Booking System)',
+                'returns': 'ศูนย์รับคืนรถยนต์ & คิดค่าปรับ (Return & Fine System)',
+                'reports': 'รายงานการเงินและค่าปรับ (Financial Reports)'
+            };
+
+            tabs.forEach(t => {
+                const sec = document.getElementById(`view-${t}`);
+                const nav = document.getElementById(`nav-${t}`);
+                if (t === tabId) {
+                    sec.classList.remove('hidden');
+                    if(nav) {
+                        nav.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+                        nav.classList.remove('text-slate-400', 'hover:bg-slate-800');
+                    }
+                } else {
+                    sec.classList.add('hidden');
+                    if(nav) {
+                        nav.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+                        nav.classList.add('text-slate-400', 'hover:bg-slate-800');
+                    }
+                }
+            });
+
+            document.getElementById('page-title').innerText = titles[tabId] || 'DriveGo System';
+            
+            // Refresh dynamic views on switch
+            if (tabId === 'dashboard') renderDashboard();
+            if (tabId === 'vehicles') renderVehicles();
+            if (tabId === 'bookings') renderBookings();
+            if (tabId === 'returns') renderActiveReturnsList();
+            if (tabId === 'reports') renderReports();
+
+            // Mobile sidebar toggle close
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+            }
+        }
+
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            sb.classList.toggle('-translate-x-full');
+        }
+
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notif-dropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        /* ==========================================================================
+           1. DASHBOARD OVERVIEW & STATS
+           ========================================================================== */
+        function updateDashboardStats() {
+            const totalCars = vehicles.length;
+            const readyCars = vehicles.filter(v => v.status === 'พร้อมใช้งาน').length;
+            const rentedCars = vehicles.filter(v => v.status === 'อยู่ระหว่างเช่า').length;
+            const bookedCars = vehicles.filter(v => v.status === 'จองแล้ว').length;
+            const maintCars = vehicles.filter(v => v.status === 'ซ่อมบำรุง').length;
+
+            document.getElementById('stat-total-cars').innerText = totalCars;
+            document.getElementById('stat-available-cars').innerText = readyCars;
+            document.getElementById('stat-rented-cars').innerText = rentedCars;
+
+            const rentRate = totalCars ? Math.round((rentedCars / totalCars) * 100) : 0;
+            document.getElementById('stat-rent-rate').innerText = `${rentRate}%`;
+
+            // Today returns count (due today or active)
+            const activeBookingsCount = bookings.filter(b => b.status === 'อยู่ระหว่างเช่า').length;
+            document.getElementById('stat-today-returns').innerText = activeBookingsCount;
+
+            // Revenue calculation
+            const totalRevenue = bookings.reduce((sum, b) => {
+                if (b.status === 'คืนรถแล้ว') {
+                    return sum + (b.netTotal || b.totalRentalFee);
+                } else if (b.status === 'อยู่ระหว่างเช่า') {
+                    return sum + b.totalRentalFee;
+                }
+                return sum;
+            }, 0);
+
+            document.getElementById('stat-monthly-revenue').innerText = `฿${totalRevenue.toLocaleString()}`;
+
+            // Sidebar badges
+            document.getElementById('badge-total-cars').innerText = totalCars;
+            document.getElementById('badge-active-bookings').innerText = activeBookingsCount;
+
+            // Fleet Progress Bars
+            document.getElementById('label-count-ready').innerText = `${readyCars} คัน`;
+            document.getElementById('label-count-rented').innerText = `${rentedCars} คัน`;
+            document.getElementById('label-count-booked').innerText = `${bookedCars} คัน`;
+            document.getElementById('label-count-maintenance').innerText = `${maintCars} คัน`;
+
+            document.getElementById('bar-ready').style.width = `${(readyCars / totalCars) * 100}%`;
+            document.getElementById('bar-rented').style.width = `${(rentedCars / totalCars) * 100}%`;
+            document.getElementById('bar-booked').style.width = `${(bookedCars / totalCars) * 100}%`;
+            document.getElementById('bar-maintenance').style.width = `${(maintCars / totalCars) * 100}%`;
+        }
+
+        function renderDashboard() {
+            updateDashboardStats();
+
+            // Render Urgent Returns
+            const urgentTbody = document.getElementById('dashboard-urgent-returns');
+            const activeRentedBookings = bookings.filter(b => b.status === 'อยู่ระหว่างเช่า');
+            
+            if (activeRentedBookings.length === 0) {
+                urgentTbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-400">ไม่มีรายการที่ต้องรับคืนในขณะนี้</td></tr>`;
+            } else {
+                urgentTbody.innerHTML = activeRentedBookings.map(b => `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="py-3 font-semibold text-slate-800">
+                            ${b.id}<br><span class="text-[10px] text-slate-400 font-mono">${b.plate}</span>
+                        </td>
+                        <td class="py-3 text-slate-700">${b.customerName}</td>
+                        <td class="py-3 text-slate-600">${formatDateTime(b.returnDate)}</td>
+                        <td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700">กำลังใช้งาน</span></td>
+                        <td class="py-3 text-right">
+                            <button onclick="selectForReturn('${b.id}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold rounded-lg shadow-sm">
+                                <i class="fa-solid fa-key mr-1"></i>รับคืนรถ
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            // Render Recent Bookings
+            const recentTbody = document.getElementById('dashboard-recent-bookings');
+            recentTbody.innerHTML = bookings.slice(0, 5).map(b => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="p-3 font-bold text-slate-900">${b.id}</td>
+                    <td class="p-3 text-slate-700">${b.customerName}</td>
+                    <td class="p-3">
+                        <span class="font-medium text-slate-800 block">${b.carModel}</span>
+                        <span class="text-[10px] text-slate-400 font-mono">${b.plate}</span>
+                    </td>
+                    <td class="p-3 text-slate-600 text-[11px]">${formatDateTime(b.pickupDate)} - ${formatDateTime(b.returnDate)}</td>
+                    <td class="p-3 font-bold text-slate-900">฿${b.totalRentalFee.toLocaleString()}</td>
+                    <td class="p-3">${getStatusBadge(b.status)}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="showReceiptModal('${b.id}')" class="text-slate-400 hover:text-slate-700 p-1">
+                            <i class="fa-solid fa-file-invoice text-base"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        /* ==========================================================================
+           2. VEHICLE MANAGEMENT
+           ========================================================================== */
+        function filterVehicles(cat) {
+            currentVehicleFilter = cat;
+            document.querySelectorAll('.v-filter-btn').forEach(btn => {
+                if (btn.innerText.includes(cat) || (cat === 'all' && btn.innerText.includes('ทั้งหมด'))) {
+                    btn.className = 'v-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 text-white transition-all';
+                } else {
+                    btn.className = 'v-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all';
+                }
+            });
+            renderVehicles();
+        }
+
+        function renderVehicles() {
+            const grid = document.getElementById('vehicle-grid');
+            const search = document.getElementById('search-vehicle-input').value.toLowerCase();
+
+            const filtered = vehicles.filter(v => {
+                const matchCategory = currentVehicleFilter === 'all' || v.category === currentVehicleFilter;
+                const matchSearch = v.model.toLowerCase().includes(search) || v.plate.toLowerCase().includes(search);
+                return matchCategory && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400">ไม่พบยานพาหนะที่ตรงกับเงื่อนไขการค้นหา</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(v => `
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="relative h-44 bg-slate-100 overflow-hidden">
+                            <img src="${v.image}" alt="${v.model}" onerror="this.src='https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=600'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            <span class="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase">
+                                ${v.category}
+                            </span>
+                            <div class="absolute top-3 right-3">
+                                ${getVehicleStatusBadge(v.status)}
+                            </div>
+                        </div>
+                        <div class="p-4 space-y-2">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <h4 class="font-bold text-slate-900 text-sm leading-tight">${v.model}</h4>
+                                    <p class="text-xs text-slate-500 font-mono mt-0.5"><i class="fa-solid fa-rectangle-ad mr-1 text-slate-400"></i>${v.plate}</p>
+                                </div>
+                            </div>
+                            <div class="pt-2 flex items-center justify-between text-xs border-t border-slate-100">
+                                <span class="text-slate-500">อัตราค่าเช่า:</span>
+                                <span class="font-bold text-blue-600 text-sm">฿${v.rate.toLocaleString()} <span class="text-[10px] font-normal text-slate-400">/วัน</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4 pt-0 flex gap-2">
+                        <button onclick="editVehicle('${v.id}')" class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors">
+                            <i class="fa-solid fa-pen-to-square mr-1"></i>แก้ไข
+                        </button>
+                        <button onclick="quickToggleVehicleStatus('${v.id}')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-lg title="เปลี่ยนสถานะ"">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getVehicleStatusBadge(status) {
+            switch (status) {
+                case 'พร้อมใช้งาน':
+                    return `<span class="bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm"><i class="fa-solid fa-circle-check mr-1"></i>พร้อมใช้งาน</span>`;
+                case 'อยู่ระหว่างเช่า':
+                    return `<span class="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm"><i class="fa-solid fa-key mr-1"></i>อยู่ระหว่างเช่า</span>`;
+                case 'จองแล้ว':
+                    return `<span class="bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm"><i class="fa-solid fa-clock mr-1"></i>จองแล้ว</span>`;
+                case 'ซ่อมบำรุง':
+                    return `<span class="bg-rose-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm"><i class="fa-solid fa-wrench mr-1"></i>ซ่อมบำรุง</span>`;
+                default:
+                    return `<span class="bg-slate-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">${status}</span>`;
+            }
+        }
+
+        function openVehicleModal(id = null) {
+            document.getElementById('vehicle-form').reset();
+            document.getElementById('v-id').value = '';
+            document.getElementById('modal-vehicle-title').innerText = id ? 'แก้ไขข้อมูลยานพาหนะ' : 'เพิ่มข้อมูลรถยนต์ใหม่';
+
+            if (id) {
+                const v = vehicles.find(item => item.id === id);
+                if (v) {
+                    document.getElementById('v-id').value = v.id;
+                    document.getElementById('v-model').value = v.model;
+                    document.getElementById('v-category').value = v.category;
+                    document.getElementById('v-plate').value = v.plate;
+                    document.getElementById('v-rate').value = v.rate;
+                    document.getElementById('v-status').value = v.status;
+                    document.getElementById('v-image').value = v.image;
+                }
+            }
+            document.getElementById('modal-vehicle').classList.remove('hidden');
+        }
+
+        function saveVehicle() {
+            const id = document.getElementById('v-id').value;
+            const model = document.getElementById('v-model').value;
+            const category = document.getElementById('v-category').value;
+            const plate = document.getElementById('v-plate').value;
+            const rate = parseFloat(document.getElementById('v-rate').value);
+            const status = document.getElementById('v-status').value;
+            const image = document.getElementById('v-image').value || 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=600';
+
+            if (id) {
+                // Edit
+                const idx = vehicles.findIndex(v => v.id === id);
+                if (idx !== -1) {
+                    vehicles[idx] = { ...vehicles[idx], model, category, plate, rate, status, image };
+                    showToast('สำเร็จ', 'อัปเดตข้อมูลรถเรียบร้อยแล้ว', 'success');
+                }
+            } else {
+                // Add
+                const newId = `CAR-${String(vehicles.length + 1).padStart(3, '0')}`;
+                vehicles.push({ id: newId, model, category, plate, rate, status, image });
+                showToast('สำเร็จ', 'เพิ่มรถยนต์ใหม่ลงระบบแล้ว', 'success');
+            }
+
+            closeModal('modal-vehicle');
+            updateDashboardStats();
+            renderVehicles();
+            populateBookingFormOptions();
+        }
+
+        function quickToggleVehicleStatus(id) {
+            const v = vehicles.find(item => item.id === id);
+            if (!v) return;
+            const statuses = ['พร้อมใช้งาน', 'อยู่ระหว่างเช่า', 'จองแล้ว', 'ซ่อมบำรุง'];
+            const nextIdx = (statuses.indexOf(v.status) + 1) % statuses.length;
+            v.status = statuses[nextIdx];
+            showToast('ปรับสถานะ', `${v.model} เปลี่ยนสถานะเป็น ${v.status}`, 'info');
+            updateDashboardStats();
+            renderVehicles();
+        }
+
+        function editVehicle(id) {
+            openVehicleModal(id);
+        }
+
+        /* ==========================================================================
+           3. CUSTOMER MANAGEMENT
+           ========================================================================== */
+        function renderCustomers() {
+            const tbody = document.getElementById('customer-table-body');
+            const search = document.getElementById('search-customer-input').value.toLowerCase();
+
+            const filtered = customers.filter(c => 
+                c.name.toLowerCase().includes(search) || 
+                c.phone.includes(search) || 
+                c.license.toLowerCase().includes(search)
+            );
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">ไม่พบข้อมูลลูกค้า</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(c => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="p-4">
+                        <div class="font-bold text-slate-900">${c.name}</div>
+                        <div class="text-[10px] text-slate-400 font-mono">${c.id}</div>
+                    </td>
+                    <td class="p-4 font-mono text-slate-600">${c.idCard}</td>
+                    <td class="p-4 font-mono text-slate-600">${c.license}</td>
+                    <td class="p-4">
+                        <div class="text-slate-800 font-medium">${c.phone}</div>
+                        <div class="text-[10px] text-slate-400">${c.email}</div>
+                    </td>
+                    <td class="p-4">
+                        <span class="font-bold text-slate-800">${c.rentalsCount}</span> ครั้ง
+                    </td>
+                    <td class="p-4">
+                        ${c.tier === 'VIP' ? '<span class="px-2 py-0.5 bg-purple-100 text-purple-700 font-bold text-[10px] rounded-full border border-purple-200"><i class="fa-solid fa-crown mr-1"></i>VIP</span>' : '<span class="px-2 py-0.5 bg-slate-100 text-slate-600 font-medium text-[10px] rounded-full">ทั่วไป</span>'}
+                    </td>
+                    <td class="p-4 text-right">
+                        <button onclick="openBookingModalForCustomer('${c.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-semibold mr-2">
+                            <i class="fa-solid fa-calendar-plus mr-1"></i>สร้างการจอง
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openCustomerModal() {
+            document.getElementById('customer-form').reset();
+            document.getElementById('modal-customer').classList.remove('hidden');
+        }
+
+        function saveCustomer() {
+            const name = document.getElementById('c-name').value;
+            const idCard = document.getElementById('c-idcard').value;
+            const license = document.getElementById('c-license').value;
+            const phone = document.getElementById('c-phone').value;
+            const tier = document.getElementById('c-tier').value;
+            const email = document.getElementById('c-email').value || '-';
+
+            const newId = `CUST-${String(customers.length + 1).padStart(3, '0')}`;
+            customers.push({
+                id: newId,
+                name,
+                idCard,
+                license,
+                phone,
+                email,
+                tier,
+                rentalsCount: 0
+            });
+
+            showToast('ลงทะเบียนสำเร็จ', `เพิ่มคุณ ${name} เข้าสู่ระบบแล้ว`, 'success');
+            closeModal('modal-customer');
+            renderCustomers();
+            populateBookingFormOptions();
+        }
+
+        /* ==========================================================================
+           4. BOOKING MANAGEMENT
+           ========================================================================== */
+        function filterBookings(status) {
+            currentBookingFilter = status;
+            document.querySelectorAll('.b-filter-btn').forEach(btn => {
+                if (btn.innerText.includes(status) || (status === 'all' && btn.innerText.includes('ทั้งหมด'))) {
+                    btn.className = 'b-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 text-white';
+                } else {
+                    btn.className = 'b-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200';
+                }
+            });
+            renderBookings();
+        }
+
+        function renderBookings() {
+            const tbody = document.getElementById('booking-table-body');
+            const filtered = bookings.filter(b => currentBookingFilter === 'all' || b.status === currentBookingFilter);
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">ไม่พบรายการการจอง</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(b => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="p-4 font-bold text-slate-900">${b.id}</td>
+                    <td class="p-4 font-medium text-slate-800">${b.customerName}</td>
+                    <td class="p-4">
+                        <div class="font-bold text-slate-900">${b.carModel}</div>
+                        <div class="text-[10px] text-slate-400 font-mono">${b.plate}</div>
+                    </td>
+                    <td class="p-4 text-slate-600 text-[11px]">
+                        <div>รับ: ${formatDateTime(b.pickupDate)}</div>
+                        <div>คืน: ${formatDateTime(b.returnDate)}</div>
+                    </td>
+                    <td class="p-4 font-bold text-slate-800">${b.days} วัน</td>
+                    <td class="p-4 font-bold text-blue-600">฿${b.totalRentalFee.toLocaleString()}</td>
+                    <td class="p-4 text-slate-600">฿${b.deposit.toLocaleString()}</td>
+                    <td class="p-4">${getStatusBadge(b.status)}</td>
+                    <td class="p-4 text-right space-x-1">
+                        ${b.status === 'อยู่ระหว่างเช่า' ? `
+                            <button onclick="selectForReturn('${b.id}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-md shadow-sm">
+                                <i class="fa-solid fa-key mr-1"></i>รับคืน
+                            </button>
+                        ` : ''}
+                        <button onclick="showReceiptModal('${b.id}')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] font-semibold rounded-md" title="ดูใบเสร็จ">
+                            <i class="fa-solid fa-receipt"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getStatusBadge(status) {
+            switch (status) {
+                case 'อยู่ระหว่างเช่า':
+                    return `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">อยู่ระหว่างเช่า</span>`;
+                case 'จองแล้ว':
+                    return `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200">จองแล้ว</span>`;
+                case 'คืนรถแล้ว':
+                    return `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">คืนรถแล้ว</span>`;
+                case 'ยกเลิก':
+                    return `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200">ยกเลิก</span>`;
+                default:
+                    return `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">${status}</span>`;
+            }
+        }
+
+        function populateBookingFormOptions() {
+            const custSelect = document.getElementById('bk-customer');
+            const vehSelect = document.getElementById('bk-vehicle');
+
+            custSelect.innerHTML = customers.map(c => `<option value="${c.id}">${c.name} (${c.phone}) - ${c.tier}</option>`).join('');
+            
+            const availableCars = vehicles.filter(v => v.status === 'พร้อมใช้งาน');
+            if (availableCars.length === 0) {
+                vehSelect.innerHTML = `<option value="">-- ไม่มีรถพร้อมใช้งาน --</option>`;
+            } else {
+                vehSelect.innerHTML = availableCars.map(v => `<option value="${v.id}">${v.model} (${v.plate}) - ฿${v.rate.toLocaleString()}/วัน</option>`).join('');
+            }
+        }
+
+        function openBookingModal() {
+            populateBookingFormOptions();
+            document.getElementById('booking-form').reset();
+            
+            // Set default pickup date tomorrow 09:00, return 3 days later
+            const now = new Date();
+            now.setDate(now.getDate() + 1);
+            now.setHours(9, 0, 0, 0);
+            
+            const end = new Date(now);
+            end.setDate(end.getDate() + 2);
+
+            document.getElementById('bk-pickup').value = formatForDateTimeInput(now);
+            document.getElementById('bk-return').value = formatForDateTimeInput(end);
+
+            calculateBookingCost();
+            document.getElementById('modal-booking').classList.remove('hidden');
+        }
+
+        function openBookingModalForCustomer(custId) {
+            openBookingModal();
+            document.getElementById('bk-customer').value = custId;
+        }
+
+        function calculateBookingCost() {
+            const carId = document.getElementById('bk-vehicle').value;
+            const pickupStr = document.getElementById('bk-pickup').value;
+            const returnStr = document.getElementById('bk-return').value;
+
+            const car = vehicles.find(v => v.id === carId);
+            if (!car || !pickupStr || !returnStr) {
+                document.getElementById('bk-calc-days').innerText = '0 วัน';
+                document.getElementById('bk-calc-daily-rate').innerText = '0 บาท';
+                document.getElementById('bk-calc-total-rate').innerText = '0 บาท';
+                return;
+            }
+
+            const pickup = new Date(pickupStr);
+            const ret = new Date(returnStr);
+            const diffHours = Math.max(1, (ret - pickup) / (1000 * 60 * 60));
+            const days = Math.max(1, Math.ceil(diffHours / 24));
+
+            const totalRate = days * car.rate;
+            const deposit = car.category === 'Luxury' || car.category === 'EV' ? 5000 : 3000;
+
+            document.getElementById('bk-calc-days').innerText = `${days} วัน (${Math.round(diffHours)} ชม.)`;
+            document.getElementById('bk-calc-daily-rate').innerText = `฿${car.rate.toLocaleString()} บาท/วัน`;
+            document.getElementById('bk-calc-total-rate').innerText = `฿${totalRate.toLocaleString()} บาท`;
+            document.getElementById('bk-calc-deposit').innerText = `฿${deposit.toLocaleString()} บาท`;
+        }
+
+        function saveBooking() {
+            const custId = document.getElementById('bk-customer').value;
+            const carId = document.getElementById('bk-vehicle').value;
+            const pickupStr = document.getElementById('bk-pickup').value;
+            const returnStr = document.getElementById('bk-return').value;
+
+            const cust = customers.find(c => c.id === custId);
+            const car = vehicles.find(v => v.id === carId);
+
+            if (!cust || !car) {
+                showToast('เกิดข้อผิดพลาด', 'กรุณาเลือกลูกค้าและรถยนต์ที่พร้อมใช้งาน', 'error');
+                return;
+            }
+
+            const pickup = new Date(pickupStr);
+            const ret = new Date(returnStr);
+            const diffHours = Math.max(1, (ret - pickup) / (1000 * 60 * 60));
+            const days = Math.max(1, Math.ceil(diffHours / 24));
+            const totalRate = days * car.rate;
+            const deposit = car.category === 'Luxury' || car.category === 'EV' ? 5000 : 3000;
+
+            const newBookingId = `BK-2026-${String(bookings.length + 1).padStart(3, '0')}`;
+
+            bookings.unshift({
+                id: newBookingId,
+                customerId: cust.id,
+                customerName: cust.name,
+                vehicleId: car.id,
+                carModel: car.model,
+                plate: car.plate,
+                pickupDate: pickupStr,
+                returnDate: returnStr,
+                days: days,
+                dailyRate: car.rate,
+                totalRentalFee: totalRate,
+                deposit: deposit,
+                status: 'อยู่ระหว่างเช่า',
+                actualReturnDate: null,
+                lateFine: 0,
+                fuelFine: 0,
+                damageFine: 0,
+                netTotal: totalRate
+            });
+
+            // Update car status to 'อยู่ระหว่างเช่า'
+            car.status = 'อยู่ระหว่างเช่า';
+            cust.rentalsCount += 1;
+
+            showToast('สร้างการจองสำเร็จ', `สร้างสัญญาเช่าเลขที่ ${newBookingId} แล้ว`, 'success');
+            closeModal('modal-booking');
+            updateDashboardStats();
+            renderDashboard();
+            renderBookings();
+            renderVehicles();
+            renderCustomers();
+        }
+
+        /* ==========================================================================
+           5. VEHICLE RETURN & FINES CALCULATION SYSTEM
+           ========================================================================== */
+        function renderActiveReturnsList() {
+            const container = document.getElementById('returns-active-list');
+            const activeList = bookings.filter(b => b.status === 'อยู่ระหว่างเช่า');
+
+            if (activeList.length === 0) {
+                container.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">ไม่มีรถยนต์ที่อยู่ระหว่างเช่าในขณะนี้</div>`;
+                return;
+            }
+
+            container.innerHTML = activeList.map(b => `
+                <div onclick="selectBookingForReturnTool('${b.id}')" class="p-3 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-xl cursor-pointer transition-all space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-slate-900 text-xs">${b.carModel}</span>
+                        <span class="text-[10px] font-mono bg-slate-200 px-1.5 py-0.5 rounded text-slate-700">${b.plate}</span>
+                    </div>
+                    <p class="text-xs text-slate-600"><i class="fa-solid fa-user text-slate-400 mr-1"></i>${b.customerName}</p>
+                    <div class="flex justify-between items-center text-[10px] text-slate-400 pt-1 border-t border-slate-200/60">
+                        <span>กำหนดคืน: ${formatDateTime(b.returnDate)}</span>
+                        <span class="text-blue-600 font-semibold">คลิกเพื่อตรวจรับ <i class="fa-solid fa-chevron-right"></i></span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectForReturn(bookingId) {
+            switchTab('returns');
+            selectBookingForReturnTool(bookingId);
+        }
+
+        function selectBookingForReturnTool(bookingId) {
+            const b = bookings.find(item => item.id === bookingId);
+            if (!b) return;
+
+            document.getElementById('return-booking-id').value = b.id;
+            document.getElementById('selected-booking-badge').innerText = `การจอง: ${b.id}`;
+
+            document.getElementById('rc-cust-name').innerText = b.customerName;
+            document.getElementById('rc-car-name').innerText = `${b.carModel} (${b.plate})`;
+            document.getElementById('rc-plan-return').innerText = formatDateTime(b.returnDate);
+            document.getElementById('rc-deposit').innerText = `฿${b.deposit.toLocaleString()} บาท`;
+
+            document.getElementById('return-contract-banner').classList.remove('hidden');
+
+            // Set actual return date to current datetime
+            const now = new Date();
+            document.getElementById('rc-actual-datetime').value = formatForDateTimeInput(now);
+            document.getElementById('rc-fuel-level').value = "100";
+            document.getElementById('rc-damage-fine').value = 0;
+            document.getElementById('rc-notes').value = '';
+
+            document.getElementById('btn-submit-return').removeAttribute('disabled');
+
+            calculateFineSummary();
+        }
+
+        function calculateFineSummary() {
+            const bookingId = document.getElementById('return-booking-id').value;
+            const b = bookings.find(item => item.id === bookingId);
+            if (!b) return;
+
+            const actualDatetimeStr = document.getElementById('rc-actual-datetime').value;
+            const fuelLevel = parseInt(document.getElementById('rc-fuel-level').value);
+            const damageFine = parseFloat(document.getElementById('rc-damage-fine').value) || 0;
+
+            // 1. Calculate Late Overtime Fine
+            let lateFine = 0;
+            if (actualDatetimeStr) {
+                const planReturn = new Date(b.returnDate);
+                const actualReturn = new Date(actualDatetimeStr);
+
+                if (actualReturn > planReturn) {
+                    const diffHours = Math.ceil((actualReturn - planReturn) / (1000 * 60 * 60));
+                    if (diffHours > 0) {
+                        lateFine = diffHours * 200; // 200 THB/hour late penalty
+                    }
+                }
+            }
+            document.getElementById('rc-late-fine-display').value = `${lateFine.toLocaleString()} บาท`;
+
+            // 2. Calculate Fuel Fine
+            let fuelFine = 0;
+            if (fuelLevel < 100) {
+                const missingQuarter = (100 - fuelLevel) / 25;
+                fuelFine = missingQuarter * 300; // 300 THB per quarter missing
+            }
+
+            // 3. Totals
+            const grossTotal = b.totalRentalFee + lateFine + fuelFine + damageFine;
+            const netSettlement = grossTotal - b.deposit;
+
+            // Update Dynamic UI Text
+            document.getElementById('sum-base-rent').innerText = `฿${b.totalRentalFee.toLocaleString()} บาท`;
+            document.getElementById('sum-late-fine').innerText = `+฿${lateFine.toLocaleString()} บาท`;
+            document.getElementById('sum-fuel-fine').innerText = `+฿${fuelFine.toLocaleString()} บาท`;
+            document.getElementById('sum-damage-fine').innerText = `+฿${damageFine.toLocaleString()} บาท`;
+            document.getElementById('sum-deposit-deduct').innerText = `-฿${b.deposit.toLocaleString()} บาท`;
+
+            const netElem = document.getElementById('sum-net-total');
+            if (netSettlement >= 0) {
+                netElem.innerText = `฿${netSettlement.toLocaleString()} บาท (ต้องชำระเพิ่ม)`;
+                netElem.className = 'text-2xl font-bold text-rose-400';
+            } else {
+                netElem.innerText = `฿${Math.abs(netSettlement).toLocaleString()} บาท (คืนเงินลูกค้า)`;
+                netElem.className = 'text-2xl font-bold text-emerald-400';
+            }
+        }
+
+        function processFinalReturn() {
+            const bookingId = document.getElementById('return-booking-id').value;
+            const b = bookings.find(item => item.id === bookingId);
+            if (!b) return;
+
+            const actualDatetimeStr = document.getElementById('rc-actual-datetime').value;
+            const fuelLevel = parseInt(document.getElementById('rc-fuel-level').value);
+            const damageFine = parseFloat(document.getElementById('rc-damage-fine').value) || 0;
+
+            // Recalculate fines
+            let lateFine = 0;
+            if (actualDatetimeStr) {
+                const planReturn = new Date(b.returnDate);
+                const actualReturn = new Date(actualDatetimeStr);
+                if (actualReturn > planReturn) {
+                    const diffHours = Math.ceil((actualReturn - planReturn) / (1000 * 60 * 60));
+                    lateFine = Math.max(0, diffHours * 200);
+                }
+            }
+
+            let fuelFine = (100 - fuelLevel) > 0 ? ((100 - fuelLevel) / 25) * 300 : 0;
+
+            // Update Booking Object
+            b.status = 'คืนรถแล้ว';
+            b.actualReturnDate = actualDatetimeStr;
+            b.lateFine = lateFine;
+            b.fuelFine = fuelFine;
+            b.damageFine = damageFine;
+            b.netTotal = b.totalRentalFee + lateFine + fuelFine + damageFine;
+
+            // Update Car Status back to 'พร้อมใช้งาน' (or 'ซ่อมบำรุง' if damage > 2000)
+            const car = vehicles.find(v => v.id === b.vehicleId);
+            if (car) {
+                if (damageFine >= 2000) {
+                    car.status = 'ซ่อมบำรุง';
+                    showToast('แจ้งเตือน', `${car.model} ถูกส่งเข้าศูนย์ซ่อมบำรุงเนื่องจากมีความเสียหาย`, 'warning');
+                } else {
+                    car.status = 'พร้อมใช้งาน';
+                }
+            }
+
+            showToast('ตรวจรับรถสำเร็จ', `ทำการปิดสัญญาคืนรถ ${b.id} เรียบร้อยแล้ว`, 'success');
+
+            // Refresh dashboards
+            updateDashboardStats();
+            renderActiveReturnsList();
+            renderReports();
+
+            // Open Receipt Modal automatically
+            showReceiptModal(b.id);
+        }
+
+        /* ==========================================================================
+           6. RECEIPT & FINANCIAL REPORTS
+           ========================================================================== */
+        function showReceiptModal(bookingId) {
+            const b = bookings.find(item => item.id === bookingId);
+            if (!b) return;
+
+            const cust = customers.find(c => c.id === b.customerId);
+
+            document.getElementById('rcpt-no').innerText = `INV-${b.id}`;
+            document.getElementById('rcpt-date').innerText = `วันที่: ${formatDateTime(b.actualReturnDate || b.pickupDate)}`;
+            document.getElementById('rcpt-cust-name').innerText = b.customerName;
+            document.getElementById('rcpt-cust-phone').innerText = `โทร: ${cust ? cust.phone : '-'}`;
+            document.getElementById('rcpt-cust-license').innerText = `ใบขับขี่: ${cust ? cust.license : '-'}`;
+
+            document.getElementById('rcpt-car-name').innerText = b.carModel;
+            document.getElementById('rcpt-car-plate').innerText = `ทะเบียน: ${b.plate}`;
+            document.getElementById('rcpt-rental-dates').innerText = `ระยะเวลา: ${formatDateTime(b.pickupDate)} - ${formatDateTime(b.returnDate)}`;
+
+            // Items
+            document.getElementById('rcpt-item-rent-desc').innerText = `อัตรา ฿${b.dailyRate.toLocaleString()} บาท/วัน`;
+            document.getElementById('rcpt-item-days').innerText = `${b.days} วัน`;
+            document.getElementById('rcpt-item-rent-fee').innerText = b.totalRentalFee.toFixed(2);
+
+            // Fines Rows visibility
+            document.getElementById('rcpt-item-late-fine').innerText = b.lateFine.toFixed(2);
+            document.getElementById('rcpt-item-fuel-fine').innerText = b.fuelFine.toFixed(2);
+            document.getElementById('rcpt-item-damage-fine').innerText = b.damageFine.toFixed(2);
+
+            const gross = b.totalRentalFee + (b.lateFine || 0) + (b.fuelFine || 0) + (b.damageFine || 0);
+            const net = gross - b.deposit;
+
+            document.getElementById('rcpt-subtotal').innerText = `฿${gross.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+            document.getElementById('rcpt-deposit-deduct').innerText = `-฿${b.deposit.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+            document.getElementById('rcpt-grand-total').innerText = `฿${net.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+
+            document.getElementById('modal-receipt').classList.remove('hidden');
+        }
+
+        function renderReports() {
+            let rentalTotal = 0;
+            let fineTotal = 0;
+
+            const completed = bookings.filter(b => b.status === 'คืนรถแล้ว');
+
+            completed.forEach(b => {
+                rentalTotal += b.totalRentalFee;
+                fineTotal += (b.lateFine + b.fuelFine + b.damageFine);
+            });
+
+            document.getElementById('report-rental-income').innerText = `฿${rentalTotal.toLocaleString()}`;
+            document.getElementById('report-fine-income').innerText = `฿${fineTotal.toLocaleString()}`;
+            document.getElementById('report-grand-total').innerText = `฿${(rentalTotal + fineTotal).toLocaleString()}`;
+
+            const tbody = document.getElementById('financial-history-table');
+            if (completed.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">ยังไม่มีรายการรับชำระที่เสร็จสมบูรณ์</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = completed.map(b => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="p-3 font-bold text-slate-900">${b.id}</td>
+                    <td class="p-3 text-slate-800 font-medium">${b.customerName}</td>
+                    <td class="p-3 text-slate-700 font-mono">฿${b.totalRentalFee.toLocaleString()}</td>
+                    <td class="p-3 text-amber-600 font-mono">฿${(b.lateFine || 0).toLocaleString()}</td>
+                    <td class="p-3 text-amber-600 font-mono">฿${(b.fuelFine || 0).toLocaleString()}</td>
+                    <td class="p-3 text-rose-600 font-mono">฿${(b.damageFine || 0).toLocaleString()}</td>
+                    <td class="p-3 text-emerald-600 font-bold font-mono">฿${(b.netTotal || b.totalRentalFee).toLocaleString()}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="showReceiptModal('${b.id}')" class="px-2.5 py-1 bg-slate-900 text-white rounded text-[10px] font-semibold hover:bg-slate-800">
+                            <i class="fa-solid fa-print mr-1"></i>ใบเสร็จ
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        /* ==========================================================================
+           7. UTILITY & HELPER FUNCTIONS
+           ========================================================================== */
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function formatDateTime(dateTimeStr) {
+            if (!dateTimeStr) return '-';
+            const dt = new Date(dateTimeStr);
+            if (isNaN(dt.getTime())) return dateTimeStr;
+            const day = String(dt.getDate()).padStart(2, '0');
+            const monthNames = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            const month = monthNames[dt.getMonth()];
+            const year = dt.getFullYear();
+            const hours = String(dt.getHours()).padStart(2, '0');
+            const mins = String(dt.getMinutes()).padStart(2, '0');
+            return `${day} ${month} ${year} ${hours}:${mins} น.`;
+        }
+
+        function formatForDateTimeInput(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        function globalQuickSearch(query) {
+            if (!query.trim()) return;
+            switchTab('bookings');
+            const tbody = document.getElementById('booking-table-body');
+            const q = query.toLowerCase();
+            const filtered = bookings.filter(b => 
+                b.id.toLowerCase().includes(q) || 
+                b.customerName.toLowerCase().includes(q) || 
+                b.plate.toLowerCase().includes(q) ||
+                b.carModel.toLowerCase().includes(q)
+            );
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">ไม่พบผลการค้นหาสำหรับ "${query}"</td></tr>`;
+            } else {
+                tbody.innerHTML = filtered.map(b => `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="p-4 font-bold text-slate-900">${b.id}</td>
+                        <td class="p-4 font-medium text-slate-800">${b.customerName}</td>
+                        <td class="p-4">
+                            <div class="font-bold text-slate-900">${b.carModel}</div>
+                            <div class="text-[10px] text-slate-400 font-mono">${b.plate}</div>
+                        </td>
+                        <td class="p-4 text-slate-600 text-[11px]">${formatDateTime(b.pickupDate)} - ${formatDateTime(b.returnDate)}</td>
+                        <td class="p-4 font-bold text-slate-800">${b.days} วัน</td>
+                        <td class="p-4 font-bold text-blue-600">฿${b.totalRentalFee.toLocaleString()}</td>
+                        <td class="p-4 text-slate-600">฿${b.deposit.toLocaleString()}</td>
+                        <td class="p-4">${getStatusBadge(b.status)}</td>
+                        <td class="p-4 text-right">
+                            <button onclick="showReceiptModal('${b.id}')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] rounded">
+                                <i class="fa-solid fa-file-invoice"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function showToast(title, message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            const colors = {
+                success: 'bg-emerald-800 text-emerald-100 border-emerald-700',
+                error: 'bg-rose-800 text-rose-100 border-rose-700',
+                warning: 'bg-amber-800 text-amber-100 border-amber-700',
+                info: 'bg-slate-800 text-slate-100 border-slate-700'
+            };
+
+            const icons = {
+                success: 'fa-circle-check text-emerald-400',
+                error: 'fa-circle-xmark text-rose-400',
+                warning: 'fa-triangle-exclamation text-amber-400',
+                info: 'fa-info-circle text-blue-400'
+            };
+
+            toast.className = `pointer-events-auto flex items-start space-x-3 p-4 rounded-xl border shadow-xl transition-all duration-300 transform translate-y-2 opacity-0 max-w-sm ${colors[type] || colors.info}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icons[type]} text-lg mt-0.5"></i>
+                <div class="flex-1 text-xs">
+                    <p class="font-bold text-white">${title}</p>
+                    <p class="mt-0.5 opacity-90">${message}</p>
+                </div>
+            `;
+
+            container.appendChild(toast);
+
+            // Animate in
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            // Auto dismiss after 3.5s
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
